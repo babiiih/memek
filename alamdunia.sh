@@ -1,10 +1,15 @@
 #!/bin/sh
+set -e
 
-wget -O loader.sh https://raw.githubusercontent.com/DiscoverMyself/Ramanode-Guides/main/loader.sh && chmod +x loader.sh && ./loader.sh
-curl -s https://raw.githubusercontent.com/DiscoverMyself/Ramanode-Guides/main/logo.sh | bash
+wget -O loader.sh https://raw.githubusercontent.com/DiscoverMyself/Ramanode-Guides/main/loader.sh
+chmod +x loader.sh
+./loader.sh
+curl -fsS -o logo.sh https://raw.githubusercontent.com/DiscoverMyself/Ramanode-Guides/main/logo.sh
+bash logo.sh
 sleep 4
 
-sudo apt-get update && sudo apt get upgrade -y
+sudo apt-get update
+sudo apt-get upgrade -y
 clear
 
 echo "Installing Hardhat and dotenv..."
@@ -79,10 +84,13 @@ echo "Creating deploy.js script..."
 mkdir -p scripts
 cat <<EOL > scripts/deploy.js
 const hre = require("hardhat");
+const fs = require("node:fs");
+const path = require("node:path");
 
 async function main() {
   const contract = await hre.ethers.deployContract("Swisstronik", ["Hello Swisstronik from Happy Cuan Airdrop!!"]);
   await contract.waitForDeployment();
+  fs.writeFileSync(path.join(__dirname, "deployment.json"), JSON.stringify({ contractAddress: contract.target }));
   console.log(\`Swisstronik contract deployed to \${contract.target}\`);
 }
 
@@ -114,7 +122,7 @@ const sendShieldedTransaction = async (signer, destination, data, value) => {
 };
 
 async function main() {
-  const contractAddress = "0xf84Df872D385997aBc28E3f07A2E3cd707c9698a";
+  const { contractAddress } = require("./deployment.json");
   const [signer] = await hre.ethers.getSigners();
   const contractFactory = await hre.ethers.getContractFactory("Swisstronik");
   const contract = contractFactory.attach(contractAddress);
@@ -152,7 +160,7 @@ const sendShieldedQuery = async (provider, destination, data) => {
 };
 
 async function main() {
-  const contractAddress = "0xf84Df872D385997aBc28E3f07A2E3cd707c9698a";
+  const { contractAddress } = require("./deployment.json");
   const [signer] = await hre.ethers.getSigners();
   const contractFactory = await hre.ethers.getContractFactory("Swisstronik");
   const contract = contractFactory.attach(contractAddress);
